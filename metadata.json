@@ -1,0 +1,5 @@
+{
+  "name": "BibleAI",
+  "description": "A faithful AI companion for scripture search, pastoral counseling, and personalized prayer based on your specific denomination and preferred Bible version.",
+  "requestFramePermissions": []
+}
