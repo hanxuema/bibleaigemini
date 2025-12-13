@@ -48,8 +48,10 @@ const App: React.FC = () => {
     const aiMsg: ChatMessage = {
       id: (Date.now() + 1).toString(),
       role: 'model',
-      text: response,
-      timestamp: Date.now()
+      text: response.markdown,
+      timestamp: Date.now(),
+      followUps: response.followUps,
+      references: response.references
     };
     
     setPastorMessages(prev => [...prev, aiMsg]);
@@ -74,8 +76,10 @@ const App: React.FC = () => {
     const aiMsg: ChatMessage = {
       id: (Date.now() + 1).toString(),
       role: 'model',
-      text: response,
-      timestamp: Date.now()
+      text: response.markdown,
+      timestamp: Date.now(),
+      followUps: response.followUps,
+      references: response.references
     };
     
     setPrayerMessages(prev => [...prev, aiMsg]);
@@ -159,7 +163,7 @@ const App: React.FC = () => {
             <div className="w-6" /> {/* Spacer */}
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 max-w-5xl mx-auto w-full">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 max-w-[1400px] mx-auto w-full h-full">
             {currentView === AppView.SEARCH && (
                 <ScriptureSearch prefs={prefs} />
             )}

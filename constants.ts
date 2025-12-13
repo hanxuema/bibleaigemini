@@ -45,6 +45,19 @@ export const FAITH_STATUS_OPTIONS = [
 
 export const UI_TRANSLATIONS: Record<string, any> = {
   'English': {
+    denominations: [
+      'Non-Denominational',
+      'Baptist',
+      'Catholic',
+      'Methodist',
+      'Presbyterian',
+      'Pentecostal/Charismatic',
+      'Lutheran',
+      'Anglican/Episcopal',
+      'Orthodox',
+      'Reformed',
+      'Other'
+    ],
     onboarding: {
       welcome: "Welcome to BibleAI",
       langStep: "Let's personalize your spiritual journey. First, what is your preferred language?",
@@ -104,6 +117,19 @@ export const UI_TRANSLATIONS: Record<string, any> = {
     }
   },
   'Chinese (Simplified)': {
+    denominations: [
+      '非宗派教会 (Non-Denominational)',
+      '浸信会 (Baptist)',
+      '天主教 (Catholic)',
+      '卫理公会 (Methodist)',
+      '长老会 (Presbyterian)',
+      '五旬节派/灵恩派 (Pentecostal)',
+      '路德宗 (Lutheran)',
+      '圣公会 (Anglican)',
+      '东正教 (Orthodox)',
+      '改革宗 (Reformed)',
+      '其他 (Other)'
+    ],
     onboarding: {
       welcome: "欢迎来到 BibleAI",
       langStep: "让我们为您定制属灵旅程。首先，您偏好的语言是？",

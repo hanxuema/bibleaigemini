@@ -24,16 +24,31 @@ export interface UserPreferences {
   isPro: boolean;
 }
 
+export interface BibleReference {
+  ref: string;
+  text: string;
+  chapter?: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'model';
   text: string;
   timestamp: number;
   isThinking?: boolean;
+  followUps?: string[];
+  references?: BibleReference[];
 }
 
 export interface SearchResult {
   reference: string;
   text: string;
   context?: string;
+}
+
+// Service response type
+export interface AIResponse {
+  markdown: string;
+  followUps?: string[];
+  references?: BibleReference[];
 }

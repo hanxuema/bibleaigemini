@@ -1,5 +1,5 @@
-import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
-import { UserPreferences } from "../types";
+import { GoogleGenAI, Type } from "@google/genai";
+import { UserPreferences, AIResponse } from "../types";
 
 // Helper to initialize AI
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -10,107 +10,146 @@ const getSystemInstruction = (prefs: UserPreferences): string => {
     
     USER CONTEXT:
     - Faith Status: ${prefs.faithStatus}
-    - Denomination/Theological Background: ${prefs.denomination}
-    - Preferred Bible Version: ${prefs.bibleVersion}
+    - Denomination: ${prefs.denomination}
+    - Bible Version: ${prefs.bibleVersion}
     - Language: ${prefs.language}
 
     CORE DIRECTIVES:
-    1. STRICT SOURCE ADHERENCE: You must ONLY provide scripture content that exists in the ${prefs.bibleVersion}. Do not paraphrase unless asked.
-    2. THEOLOGICAL ALIGNMENT: Your explanations should respect the traditions of ${prefs.denomination} while maintaining biblical accuracy. If a topic is controversial between denominations, objectively state the ${prefs.denomination} view while acknowledging others if necessary.
-    3. NO HALLUCINATIONS: If a verse does not exist or the Bible does not address a topic, clearly state that.
-    4. TONE: Gentle, pastoral, wise, and encouraging.
-    5. FORMATTING: Use Markdown. Bold verse references. Blockquote scripture text.
-    6. LANGUAGE: You must strictly respond in ${prefs.language}. If the user asks in a different language, reply in ${prefs.language} unless explicitly asked to translate.
+    1. STRICT SOURCE ADHERENCE: Use ${prefs.bibleVersion}.
+    2. THEOLOGICAL ALIGNMENT: Respect ${prefs.denomination} traditions.
+    3. TONE: Gentle, pastoral, wise.
+    4. LANGUAGE: Respond in ${prefs.language}.
   `;
 };
 
-export const searchScripture = async (query: string, prefs: UserPreferences): Promise<string> => {
+// Shared Schema for Search and Pastor
+const responseSchema = {
+  type: Type.OBJECT,
+  properties: {
+    answer: { 
+      type: Type.STRING,
+      description: "The main response in Markdown format. Do NOT include the list of references at the end of the text, as they will be shown in a side panel."
+    },
+    followUpQuestions: {
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
+      description: "3 short, relevant follow-up questions for the user to ask next."
+    },
+    citedVerses: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          ref: { type: Type.STRING, description: "Book Chapter:Verse (e.g. John 3:16)" },
+          text: { type: Type.STRING, description: "The full text of the verse." },
+          chapter: { type: Type.STRING, description: "The Book and Chapter (e.g. John 3)" }
+        }
+      }
+    }
+  },
+  required: ["answer", "followUpQuestions", "citedVerses"]
+};
+
+export const searchScripture = async (query: string, prefs: UserPreferences): Promise<AIResponse> => {
   const ai = getAI();
   const prompt = `
-    Find relevant bible verses for the search query: "${query}".
-    
-    Requirements:
-    1. List 3-5 most relevant passages from the ${prefs.bibleVersion}.
-    2. For each passage, provide the Reference (e.g., John 3:16) and the Full Text in ${prefs.language}.
-    3. Provide a brief 1-sentence context for why this applies to "${query}" (in ${prefs.language}).
-    4. Output strictly in valid Markdown.
-    5. Ensure all text is in ${prefs.language}.
+    Find relevant bible verses for: "${query}".
+    Provide a helpful summary or explanation in the 'answer' field.
+    Extract the specific verses used into the 'citedVerses' array.
+    Suggest next steps in 'followUpQuestions'.
+    Ensure all text is in ${prefs.language}.
   `;
 
   try {
-    const response: GenerateContentResponse = await ai.models.generateContent({
+    const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         systemInstruction: getSystemInstruction(prefs),
-        temperature: 0.3, // Low temperature for factual accuracy
+        responseMimeType: "application/json",
+        responseSchema: responseSchema,
+        temperature: 0.3,
       }
     });
-    return response.text || "No scriptures found.";
+    
+    const data = JSON.parse(response.text || "{}");
+    return {
+      markdown: data.answer || "No results found.",
+      followUps: data.followUpQuestions || [],
+      references: data.citedVerses || []
+    };
   } catch (error) {
     console.error("Scripture search error:", error);
-    return "I apologize, I am having trouble searching the scriptures right now. Please try again.";
+    return { markdown: "Error searching scriptures." };
   }
 };
 
-export const askPastor = async (question: string, history: string[], prefs: UserPreferences): Promise<string> => {
+export const askPastor = async (question: string, history: string[], prefs: UserPreferences): Promise<AIResponse> => {
   const ai = getAI();
-  
-  // Construct a simple history string for context window
-  const conversationContext = history.join("\n");
-
   const prompt = `
-    The user asks: "${question}"
+    User question: "${question}"
     
-    Answer as a wise, empathetic pastor from a ${prefs.denomination} background.
-    1. Start with a direct, compassionate answer in ${prefs.language}.
-    2. Back up every claim with scripture from ${prefs.bibleVersion}.
-    3. If the user is a ${prefs.faithStatus}, adjust the complexity accordingly (simpler for Seekers, deeper for Leaders).
-    4. End with a short, encouraging thought or challenge.
-    5. Ensure the entire response is in ${prefs.language}.
+    Provide a pastoral response.
+    - Answer logically and empathetically in 'answer'.
+    - If you quote scripture, put the reference and text in 'citedVerses'.
+    - Suggest 3 follow-up questions in 'followUpQuestions'.
+    - Ensure all text is in ${prefs.language}.
   `;
 
   try {
-    const response: GenerateContentResponse = await ai.models.generateContent({
+    const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: prompt, // In a real app, we'd pass full history object, simplified here
+      contents: prompt, // history would be included here in a real app
       config: {
         systemInstruction: getSystemInstruction(prefs),
-        thinkingConfig: { thinkingBudget: 1024 }, // Allow some thinking for theological depth
+        responseMimeType: "application/json",
+        responseSchema: responseSchema,
+        thinkingConfig: { thinkingBudget: 1024 },
       }
     });
-    return response.text || "I am unable to provide counsel at this moment.";
+    
+    const data = JSON.parse(response.text || "{}");
+    return {
+      markdown: data.answer || "I cannot answer right now.",
+      followUps: data.followUpQuestions || [],
+      references: data.citedVerses || []
+    };
   } catch (error) {
     console.error("Pastor chat error:", error);
-    return "I am having trouble connecting to the service. Please try again.";
+    return { markdown: "Service unavailable." };
   }
 };
 
-export const generatePrayer = async (topic: string, prefs: UserPreferences): Promise<string> => {
+export const generatePrayer = async (topic: string, prefs: UserPreferences): Promise<AIResponse> => {
+  // Prayer can stay simple, or we can use the same structure. 
+  // For consistency, let's use the same structure but maybe fewer follow-ups.
   const ai = getAI();
-  
   const prompt = `
-    Write a personalized prayer regarding: "${topic}".
-    
-    Style:
-    - Language: ${prefs.language}
-    - Use language appropriate for a ${prefs.denomination} believer.
-    - Incorporate 1-2 verses from ${prefs.bibleVersion} naturally into the prayer.
-    - Structure: Invocation -> Petition -> Thanksgiving -> Closing.
-    - Keep it under 200 words.
+    Write a prayer about: "${topic}".
+    Output the prayer text in 'answer'.
+    If verses are used, add to 'citedVerses'.
+    In 'followUpQuestions', suggest "Pray for..." related topics.
   `;
 
   try {
-    const response: GenerateContentResponse = await ai.models.generateContent({
+    const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         systemInstruction: getSystemInstruction(prefs),
+        responseMimeType: "application/json",
+        responseSchema: responseSchema,
       }
     });
-    return response.text || "Let us pray...";
+    
+    const data = JSON.parse(response.text || "{}");
+    return {
+      markdown: data.answer || "Let us pray...",
+      followUps: data.followUpQuestions || [],
+      references: data.citedVerses || []
+    };
   } catch (error) {
-    console.error("Prayer generation error:", error);
-    return "Unable to generate prayer at this time.";
+    console.error("Prayer error:", error);
+    return { markdown: "Error generating prayer." };
   }
 };

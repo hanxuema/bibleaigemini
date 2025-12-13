@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { UserPreferences, FaithStatus } from '../types';
 import { BIBLE_VERSIONS, DENOMINATIONS, LANGUAGES, FAITH_STATUS_OPTIONS, getText } from '../constants';
-import { Book, ChevronRight, Check } from 'lucide-react';
+import { Book, ChevronRight, Check, Globe, Heart, Church } from 'lucide-react';
 
 interface Props {
   onComplete: (prefs: UserPreferences) => void;
@@ -20,26 +20,79 @@ const Onboarding: React.FC<Props> = ({ onComplete }) => {
   });
 
   const t = getText(prefs.language).onboarding;
+  // Get the denominations list for the current language
+  const currentDenominations = getText(prefs.language).denominations || DENOMINATIONS;
 
   const nextStep = () => setStep(s => s + 1);
-  const prevStep = () => setStep(s => s - 1);
+  const goToStep = (s: number) => {
+    // Only allow going back or to next immediate step if current is filled (logic simplified here)
+    setStep(s);
+  };
 
   const handleComplete = () => {
     onComplete({ ...prefs, isCompleted: true });
   };
 
+  const handleLanguageSelect = (lang: string) => {
+    // When language changes, update language AND reset denomination to the first option of the new language
+    // to ensure validity and consistency.
+    const newTranslations = getText(lang);
+    const newDenoms = newTranslations.denominations || DENOMINATIONS;
+    
+    setPrefs({ 
+        ...prefs, 
+        language: lang,
+        denomination: newDenoms[0] 
+    });
+    nextStep();
+  };
+
+  const steps = [
+    { id: 1, label: "Language", icon: Globe },
+    { id: 2, label: "Faith", icon: Heart },
+    { id: 3, label: "Background", icon: Church },
+  ];
+
+  const renderStepHeader = () => (
+    <div className="flex items-center justify-between mb-8 relative">
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-bible-100 -z-10 rounded-full"></div>
+        {steps.map((s) => {
+            const isActive = step === s.id;
+            const isCompleted = step > s.id;
+            const Icon = s.icon;
+            return (
+                <button 
+                    key={s.id}
+                    onClick={() => goToStep(s.id)}
+                    className={`flex flex-col items-center gap-2 bg-white px-2 transition-all ${isActive || isCompleted ? 'opacity-100' : 'opacity-50'}`}
+                >
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
+                        isActive ? 'border-bible-600 bg-bible-600 text-white scale-110' : 
+                        isCompleted ? 'border-bible-600 bg-white text-bible-600' : 'border-bible-200 bg-white text-bible-300'
+                    }`}>
+                        {isCompleted ? <Check size={18} /> : <Icon size={18} />}
+                    </div>
+                    <span className={`text-xs font-semibold ${isActive ? 'text-bible-800' : 'text-bible-400'}`}>
+                        {s.label}
+                    </span>
+                </button>
+            )
+        })}
+    </div>
+  );
+
   const renderStep1_Language = () => (
     <div className="space-y-4 animate-fade-in">
-      <h2 className="text-2xl font-serif font-bold text-bible-900">{t.welcome}</h2>
-      <p className="text-bible-700">{t.langStep}</p>
+      <h2 className="text-2xl font-serif font-bold text-bible-900 text-center">{t.welcome}</h2>
+      <p className="text-bible-700 text-center mb-6">{t.langStep}</p>
       <div className="grid grid-cols-2 gap-3">
         {LANGUAGES.map(lang => (
           <button
             key={lang}
-            onClick={() => { setPrefs({ ...prefs, language: lang }); nextStep(); }}
-            className={`p-4 rounded-xl border text-left transition-all ${
+            onClick={() => handleLanguageSelect(lang)}
+            className={`p-4 rounded-xl border text-left transition-all hover:scale-[1.02] ${
               prefs.language === lang 
-                ? 'border-bible-500 bg-bible-100 ring-1 ring-bible-500' 
+                ? 'border-bible-500 bg-bible-100 ring-1 ring-bible-500 shadow-md' 
                 : 'border-bible-200 hover:border-bible-400 hover:bg-white'
             }`}
           >
@@ -52,18 +105,16 @@ const Onboarding: React.FC<Props> = ({ onComplete }) => {
 
   const renderStep2_Faith = () => (
     <div className="space-y-4 animate-fade-in">
-      <h2 className="text-2xl font-serif font-bold text-bible-900">{t.journeyTitle}</h2>
-      <p className="text-bible-700">{t.journeyDesc}</p>
+      <h2 className="text-2xl font-serif font-bold text-bible-900 text-center">{t.journeyTitle}</h2>
+      <p className="text-bible-700 text-center mb-6">{t.journeyDesc}</p>
       <div className="space-y-3">
         {FAITH_STATUS_OPTIONS.map(opt => {
-            // Get translated label/desc if available
             const translated = t.faithOptions?.[opt.value] || opt;
-            
             return (
                 <button
                     key={opt.value}
                     onClick={() => { setPrefs({ ...prefs, faithStatus: opt.value }); nextStep(); }}
-                    className={`w-full p-4 rounded-xl border text-left transition-all flex items-center justify-between group ${
+                    className={`w-full p-4 rounded-xl border text-left transition-all flex items-center justify-between group hover:shadow-md ${
                     prefs.faithStatus === opt.value
                         ? 'border-bible-500 bg-bible-100'
                         : 'border-bible-200 hover:border-bible-400 bg-white'
@@ -83,34 +134,40 @@ const Onboarding: React.FC<Props> = ({ onComplete }) => {
 
   const renderStep3_Denomination = () => (
     <div className="space-y-4 animate-fade-in">
-      <h2 className="text-2xl font-serif font-bold text-bible-900">{t.bgTitle}</h2>
-      <p className="text-bible-700">{t.bgDesc}</p>
-      <select
-        className="w-full p-3 rounded-lg border border-bible-300 bg-white text-bible-900 focus:ring-2 focus:ring-bible-500 outline-none"
-        value={prefs.denomination}
-        onChange={(e) => setPrefs({...prefs, denomination: e.target.value})}
-      >
-        {DENOMINATIONS.map(d => (
-          <option key={d} value={d}>{d}</option>
-        ))}
-      </select>
+      <h2 className="text-2xl font-serif font-bold text-bible-900 text-center">{t.bgTitle}</h2>
+      <p className="text-bible-700 text-center mb-6">{t.bgDesc}</p>
       
-      <div className="pt-4">
-        <p className="text-bible-700 mb-2">{t.versionLabel}</p>
-        <select
-            className="w-full p-3 rounded-lg border border-bible-300 bg-white text-bible-900 focus:ring-2 focus:ring-bible-500 outline-none"
-            value={prefs.bibleVersion}
-            onChange={(e) => setPrefs({...prefs, bibleVersion: e.target.value})}
-        >
-            {BIBLE_VERSIONS.map(v => (
-            <option key={v.code} value={v.code}>{v.name}</option>
-            ))}
-        </select>
+      <div className="space-y-4">
+        <div>
+            <label className="block text-sm font-medium text-bible-600 mb-1">Denomination</label>
+            <select
+                className="w-full p-3 rounded-lg border border-bible-300 bg-white text-bible-900 focus:ring-2 focus:ring-bible-500 outline-none"
+                value={prefs.denomination}
+                onChange={(e) => setPrefs({...prefs, denomination: e.target.value})}
+            >
+                {currentDenominations.map((d: string) => (
+                <option key={d} value={d}>{d}</option>
+                ))}
+            </select>
+        </div>
+        
+        <div>
+            <label className="block text-sm font-medium text-bible-600 mb-1">{t.versionLabel}</label>
+            <select
+                className="w-full p-3 rounded-lg border border-bible-300 bg-white text-bible-900 focus:ring-2 focus:ring-bible-500 outline-none"
+                value={prefs.bibleVersion}
+                onChange={(e) => setPrefs({...prefs, bibleVersion: e.target.value})}
+            >
+                {BIBLE_VERSIONS.map(v => (
+                <option key={v.code} value={v.code}>{v.name}</option>
+                ))}
+            </select>
+        </div>
       </div>
 
       <button
         onClick={handleComplete}
-        className="w-full mt-6 bg-bible-600 text-white py-3 rounded-lg font-semibold hover:bg-bible-700 transition-colors shadow-md flex items-center justify-center gap-2"
+        className="w-full mt-8 bg-bible-600 text-white py-3.5 rounded-xl font-semibold hover:bg-bible-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
       >
         {t.startBtn} <Check size={18} />
       </button>
@@ -119,22 +176,16 @@ const Onboarding: React.FC<Props> = ({ onComplete }) => {
 
   return (
     <div className="min-h-screen bg-bible-50 flex items-center justify-center p-4">
-      <div className="bg-white max-w-md w-full rounded-2xl shadow-xl p-8 border border-bible-100">
-        <div className="flex justify-center mb-6">
-          <div className="w-12 h-12 bg-bible-100 rounded-full flex items-center justify-center text-bible-600">
-            <Book size={24} />
-          </div>
-        </div>
+      <div className="bg-white max-w-lg w-full rounded-3xl shadow-2xl p-8 border border-bible-100">
         
-        {step === 1 && renderStep1_Language()}
-        {step === 2 && renderStep2_Faith()}
-        {step === 3 && renderStep3_Denomination()}
-
-        <div className="mt-8 flex justify-center gap-2">
-            {[1, 2, 3].map(i => (
-                <div key={i} className={`h-2 rounded-full transition-all duration-300 ${i === step ? 'w-8 bg-bible-600' : 'w-2 bg-bible-200'}`} />
-            ))}
+        {renderStepHeader()}
+        
+        <div className="min-h-[320px]">
+            {step === 1 && renderStep1_Language()}
+            {step === 2 && renderStep2_Faith()}
+            {step === 3 && renderStep3_Denomination()}
         </div>
+
       </div>
     </div>
   );
