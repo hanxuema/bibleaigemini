@@ -25,16 +25,18 @@ export const DENOMINATIONS = [
   'Other'
 ];
 
-export const LANGUAGES = [
-  'English',
-  'Chinese (Simplified)',
-  'Chinese (Traditional)',
-  'Spanish',
-  'German',
-  'French',
-  'Korean',
-  'Portuguese'
+export const LANGUAGE_OPTIONS = [
+  { code: 'English', label: 'English' },
+  { code: 'Chinese (Simplified)', label: '中文 (简体)' },
+  { code: 'Chinese (Traditional)', label: '中文 (繁體)' },
+  { code: 'Spanish', label: 'Español' },
+  { code: 'German', label: 'Deutsch' },
+  { code: 'French', label: 'Français' },
+  { code: 'Korean', label: '한국어' },
+  { code: 'Portuguese', label: 'Português' }
 ];
+
+export const LANGUAGES = LANGUAGE_OPTIONS.map(l => l.code);
 
 export const FAITH_STATUS_OPTIONS = [
   { value: FaithStatus.BELIEVER, label: 'I am a Believer', desc: 'I want to deepen my walk with God.' },
@@ -43,21 +45,40 @@ export const FAITH_STATUS_OPTIONS = [
   { value: FaithStatus.SKEPTIC, label: 'I am Curious', desc: 'I want to understand what the Bible says.' },
 ];
 
+// Simple hardcoded verses for the ticker (can be expanded)
+export const DAILY_VERSES = [
+    { 
+      en: { text: "For I know the plans I have for you, declares the Lord, plans for welfare and not for evil, to give you a future and a hope.", ref: "Jeremiah 29:11" },
+      zh: { text: "耶和华说：我知道我向你们所怀的意念是赐平安的意念，不是降灾祸的意念，要叫你们末后有指望。", ref: "耶利米书 29:11" }
+    },
+    {
+      en: { text: "The Lord is my shepherd; I shall not want.", ref: "Psalm 23:1" },
+      zh: { text: "耶和华是我的牧者，我必不致缺乏。", ref: "诗篇 23:1" }
+    },
+    {
+      en: { text: "I can do all things through him who strengthens me.", ref: "Philippians 4:13" },
+      zh: { text: "我靠着那加给我力量的，凡事都能做。", ref: "腓立比书 4:13" }
+    },
+    {
+      en: { text: "But the fruit of the Spirit is love, joy, peace, patience, kindness, goodness, faithfulness.", ref: "Galatians 5:22" },
+      zh: { text: "圣灵所结的果子，就是仁爱、喜乐、和平、忍耐、恩慈、良善、信实。", ref: "加拉太书 5:22" }
+    }
+];
+
 export const UI_TRANSLATIONS: Record<string, any> = {
   'English': {
     denominations: [
-      'Non-Denominational',
-      'Baptist',
-      'Catholic',
-      'Methodist',
-      'Presbyterian',
-      'Pentecostal/Charismatic',
-      'Lutheran',
-      'Anglican/Episcopal',
-      'Orthodox',
-      'Reformed',
-      'Other'
+      'Non-Denominational', 'Baptist', 'Catholic', 'Methodist', 'Presbyterian', 
+      'Pentecostal/Charismatic', 'Lutheran', 'Anglican/Episcopal', 'Orthodox', 'Reformed', 'Other'
     ],
+    common: {
+        rateLimit: "You have reached your daily limit of 30 messages. Please seek God's peace and return tomorrow.",
+        dailyVerse: "Daily Verse",
+        comingSoon: "Coming Soon",
+        advancedQaTitle: "Advanced Q&A Coming Soon",
+        advancedQaDesc: "We are developing a specialized theological model for deeper scriptural analysis.",
+        errorGeneric: "An error occurred while connecting to the service. Please try again.",
+    },
     onboarding: {
       welcome: "Welcome to BibleAI",
       langStep: "Let's personalize your spiritual journey. First, what is your preferred language?",
@@ -77,7 +98,7 @@ export const UI_TRANSLATIONS: Record<string, any> = {
     nav: {
       menu: "Menu",
       search: "Scripture Search",
-      pastor: "Pastor Chat",
+      pastor: "Advanced Q&A",
       prayer: "Prayer Room",
       sub: "Premium Plan",
       settings: "Settings",
@@ -98,16 +119,20 @@ export const UI_TRANSLATIONS: Record<string, any> = {
       consulting: "Consulting scripture...",
       emptyPastor: "Ask a theological question or seek advice to begin.",
       emptyPrayer: "What should we pray for today?",
-      you: "You"
+      you: "You",
+      viewReferences: "View Related Verses"
     },
     sub: {
       title: "Unlock Full Spiritual Depth",
-      desc: "Support our mission and gain access to deeper theological insights, unlimited prayer generation, and church leader tools.",
+      desc: "Our premium features are currently under development. Stay tuned for deeper theological tools.",
       free: "Free Plan",
       pro: "Disciple Pro",
-      rec: "RECOMMENDED",
-      trial: "Start Free Trial",
-      current: "Current Plan"
+      rec: "TO BE RELEASED",
+      trial: "Notify Me When Available",
+      current: "Current Plan",
+      feature1: "Deep Theological Exegesis",
+      feature2: "Unlimited Prayer Generation",
+      feature3: "Sermon Builder"
     },
     settings: {
         title: "Settings",
@@ -118,18 +143,18 @@ export const UI_TRANSLATIONS: Record<string, any> = {
   },
   'Chinese (Simplified)': {
     denominations: [
-      '非宗派教会 (Non-Denominational)',
-      '浸信会 (Baptist)',
-      '天主教 (Catholic)',
-      '卫理公会 (Methodist)',
-      '长老会 (Presbyterian)',
-      '五旬节派/灵恩派 (Pentecostal)',
-      '路德宗 (Lutheran)',
-      '圣公会 (Anglican)',
-      '东正教 (Orthodox)',
-      '改革宗 (Reformed)',
-      '其他 (Other)'
+      '非宗派教会 (Non-Denominational)', '浸信会 (Baptist)', '天主教 (Catholic)', '卫理公会 (Methodist)', 
+      '长老会 (Presbyterian)', '五旬节派/灵恩派 (Pentecostal)', '路德宗 (Lutheran)', '圣公会 (Anglican)', 
+      '东正教 (Orthodox)', '改革宗 (Reformed)', '其他 (Other)'
     ],
+    common: {
+        rateLimit: "您已达到每日 30 条消息的限制。请安息主怀，明天再来。",
+        dailyVerse: "每日金句",
+        comingSoon: "即将推出",
+        advancedQaTitle: "高级问答 即将推出",
+        advancedQaDesc: "我们正在开发用于深度经文分析的专业神学模型。",
+        errorGeneric: "连接服务时发生错误。请稍后重试。",
+    },
     onboarding: {
       welcome: "欢迎来到 BibleAI",
       langStep: "让我们为您定制属灵旅程。首先，您偏好的语言是？",
@@ -149,7 +174,7 @@ export const UI_TRANSLATIONS: Record<string, any> = {
     nav: {
       menu: "菜单",
       search: "经文查询",
-      pastor: "牧师问答",
+      pastor: "高级问答",
       prayer: "祷告室",
       sub: "高级会员",
       settings: "设置",
@@ -170,16 +195,20 @@ export const UI_TRANSLATIONS: Record<string, any> = {
       consulting: "正在查考圣经...",
       emptyPastor: "请提出神学问题或寻求建议以开始。",
       emptyPrayer: "今天我们为什么祷告？",
-      you: "你"
+      you: "你",
+      viewReferences: "查看相关章节"
     },
     sub: {
       title: "解锁属灵深度",
-      desc: "支持我们的事工，解锁更深层的神学见解、无限次祷告生成和教会领袖工具。",
+      desc: "我们的高级功能正在开发中。敬请期待更深层的神学工具。",
       free: "免费计划",
       pro: "门徒 Pro",
-      rec: "推荐",
-      trial: "开始免费试用",
-      current: "当前计划"
+      rec: "即将推出",
+      trial: "上线时通知我",
+      current: "当前计划",
+      feature1: "深度神学释经",
+      feature2: "无限次祷告生成",
+      feature3: "讲章构建工具"
     },
     settings: {
         title: "设置",

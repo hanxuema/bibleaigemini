@@ -29,16 +29,11 @@ const ChatInterface: React.FC<Props> = ({ messages, onSendMessage, isLoading, pl
     scrollToBottom();
   }, [messages, isLoading]);
 
-  // Update active references based on the last message from AI
+  // Update active references state based on latest, but DO NOT auto-open
   useEffect(() => {
     const lastAiMsg = [...messages].reverse().find(m => m.role === 'model');
     if (lastAiMsg?.references && lastAiMsg.references.length > 0) {
       setActiveRefs(lastAiMsg.references);
-      setShowRefPanel(true);
-    } else {
-        // Only hide if we explicitly want to, but keeping it persistent might be better.
-        // Let's keep it open if there are refs, but user can close.
-        if (messages.length === 0) setShowRefPanel(false);
     }
   }, [messages]);
 
@@ -54,6 +49,11 @@ const ChatInterface: React.FC<Props> = ({ messages, onSendMessage, isLoading, pl
     if (!isLoading) {
       onSendMessage(text);
     }
+  };
+
+  const handleShowReferences = (refs: BibleReference[]) => {
+      setActiveRefs(refs);
+      setShowRefPanel(true);
   };
 
   return (
@@ -72,12 +72,13 @@ const ChatInterface: React.FC<Props> = ({ messages, onSendMessage, isLoading, pl
                     <p className="text-[10px] text-bible-500 uppercase tracking-wider">AI Powered • Strictly Biblical</p>
                 </div>
             </div>
-            {/* Mobile toggle for refs if needed, or desktop indicator */}
+            
+            {/* Context Toggle (shows latest refs if panel is closed) */}
             {activeRefs.length > 0 && !showRefPanel && (
                 <button 
                     onClick={() => setShowRefPanel(true)}
                     className="text-bible-600 hover:bg-bible-100 p-2 rounded-lg"
-                    title="Show Scripture References"
+                    title={t.viewReferences}
                 >
                     <BookOpen size={20} />
                 </button>
@@ -115,6 +116,17 @@ const ChatInterface: React.FC<Props> = ({ messages, onSendMessage, isLoading, pl
                     <div className={`prose prose-sm max-w-none ${msg.role === 'user' ? 'prose-invert' : 'prose-stone'}`}>
                         <ReactMarkdown>{msg.text}</ReactMarkdown>
                     </div>
+
+                    {/* View References Button (Inside bubble, but distinct) */}
+                    {msg.role === 'model' && msg.references && msg.references.length > 0 && (
+                        <button 
+                            onClick={() => handleShowReferences(msg.references!)}
+                            className="mt-3 flex items-center gap-2 text-xs font-semibold text-bible-600 bg-bible-50 px-3 py-2 rounded-lg hover:bg-bible-100 transition-colors w-full border border-bible-100"
+                        >
+                            <BookOpen size={14} />
+                            {t.viewReferences}
+                        </button>
+                    )}
                 </div>
 
                 {/* Follow Up Chips */}
@@ -188,7 +200,7 @@ const ChatInterface: React.FC<Props> = ({ messages, onSendMessage, isLoading, pl
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {activeRefs.length === 0 ? (
                     <div className="text-center text-bible-400 mt-10 text-sm">
-                        No scripture references cited in the current response.
+                        No scripture references cited.
                     </div>
                 ) : (
                     activeRefs.map((ref, idx) => (

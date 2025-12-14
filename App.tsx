@@ -3,8 +3,10 @@ import { UserPreferences, AppView, ChatMessage } from './types';
 import Onboarding from './components/Onboarding';
 import ChatInterface from './components/ChatInterface';
 import ScriptureSearch from './components/ScriptureSearch';
+import DailyVerseTicker from './components/DailyVerseTicker';
 import { askPastor, generatePrayer } from './services/geminiService';
-import { Book, MessageCircle, Heart, Settings, Menu, X, Crown, Search as SearchIcon } from 'lucide-react';
+import { checkRateLimit, incrementUsage } from './services/rateLimit';
+import { Book, MessageCircle, Heart, Settings, Menu, X, Crown, Search as SearchIcon, Clock } from 'lucide-react';
 import { getText } from './constants';
 
 const App: React.FC = () => {
@@ -30,18 +32,39 @@ const App: React.FC = () => {
     setCurrentView(AppView.SEARCH); // Default to search after onboarding
   };
 
+  const checkLimitAndNotify = (currentMessages: ChatMessage[], setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>) => {
+      if (!checkRateLimit()) {
+          const limitMsg: ChatMessage = {
+              id: Date.now().toString(),
+              role: 'model',
+              text: prefs ? getText(prefs.language).common.rateLimit : "Rate limit reached.",
+              timestamp: Date.now(),
+              isThinking: false
+          };
+          setMessages([...currentMessages, limitMsg]);
+          return false;
+      }
+      return true;
+  };
+
   const handlePastorMessage = async (text: string) => {
     if (!prefs) return;
-    setIsLoading(true);
     
+    // Optimistic user message update
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
       text,
       timestamp: Date.now()
     };
-    
-    setPastorMessages(prev => [...prev, userMsg]);
+    const nextMessages = [...pastorMessages, userMsg];
+    setPastorMessages(nextMessages);
+
+    // Rate Limit Check
+    if (!checkLimitAndNotify(nextMessages, setPastorMessages)) return;
+
+    setIsLoading(true);
+    incrementUsage();
 
     const response = await askPastor(text, pastorMessages.map(m => m.text), prefs);
     
@@ -60,7 +83,6 @@ const App: React.FC = () => {
 
   const handlePrayerRequest = async (text: string) => {
     if (!prefs) return;
-    setIsLoading(true);
 
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
@@ -68,8 +90,14 @@ const App: React.FC = () => {
       text: `Please pray for: ${text}`,
       timestamp: Date.now()
     };
-    
-    setPrayerMessages(prev => [...prev, userMsg]);
+    const nextMessages = [...prayerMessages, userMsg];
+    setPrayerMessages(nextMessages);
+
+    // Rate Limit Check
+    if (!checkLimitAndNotify(nextMessages, setPrayerMessages)) return;
+
+    setIsLoading(true);
+    incrementUsage();
 
     const response = await generatePrayer(text, prefs);
     
@@ -163,27 +191,37 @@ const App: React.FC = () => {
             <div className="w-6" /> {/* Spacer */}
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 max-w-[1400px] mx-auto w-full h-full">
+        {/* Daily Verse Ticker */}
+        <DailyVerseTicker language={prefs.language} />
+
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 max-w-[1400px] mx-auto w-full h-full relative">
             {currentView === AppView.SEARCH && (
                 <ScriptureSearch prefs={prefs} />
             )}
 
             {currentView === AppView.PASTOR && (
-                <div className="h-[calc(100vh-8rem)]">
-                    <ChatInterface 
-                        messages={pastorMessages} 
-                        onSendMessage={handlePastorMessage} 
-                        isLoading={isLoading}
-                        placeholder={t.chat.placeholder}
-                        personaName={`${prefs.denomination} Pastor`}
-                        emptyStateText={t.chat.emptyPastor}
-                        prefs={prefs}
-                    />
+                <div className="flex flex-col items-center justify-center h-[70vh] text-center p-8 space-y-6 animate-fade-in">
+                    <div className="w-20 h-20 bg-bible-200 rounded-full flex items-center justify-center text-bible-600 mb-4">
+                        <MessageCircle size={40} />
+                    </div>
+                    <div>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold mb-3">
+                            <Clock size={12} /> {t.common.comingSoon}
+                        </div>
+                        <h2 className="text-3xl font-serif font-bold text-bible-900 mb-2">{t.common.advancedQaTitle}</h2>
+                        <p className="text-bible-600 max-w-md mx-auto">{t.common.advancedQaDesc}</p>
+                    </div>
+                    <button 
+                        onClick={() => setCurrentView(AppView.SUBSCRIPTION)}
+                        className="px-6 py-3 bg-bible-800 text-white rounded-xl hover:bg-bible-900 transition-colors font-semibold shadow-lg"
+                    >
+                        {t.sub.trial}
+                    </button>
                 </div>
             )}
 
             {currentView === AppView.PRAYER && (
-                <div className="h-[calc(100vh-8rem)]">
+                <div className="h-[calc(100vh-10rem)] md:h-[calc(100vh-8rem)]">
                     <ChatInterface 
                         messages={prayerMessages} 
                         onSendMessage={handlePrayerRequest} 
@@ -205,25 +243,37 @@ const App: React.FC = () => {
                     <p className="text-lg text-bible-600">{t.sub.desc}</p>
                     
                     <div className="grid md:grid-cols-2 gap-6 text-left mt-8">
-                        <div className="bg-white p-6 rounded-2xl border border-bible-200 shadow-sm opacity-60">
+                        {/* Free Plan */}
+                        <div className="bg-white p-6 rounded-2xl border border-bible-200 shadow-sm">
                             <h3 className="font-bold text-xl mb-2">{t.sub.free}</h3>
-                            <ul className="space-y-2 text-bible-600 mb-6">
-                                <li className="flex gap-2"><Settings size={16}/> {t.nav.search}</li>
-                                <li className="flex gap-2"><Settings size={16}/> Daily Verse</li>
+                            <ul className="space-y-3 text-bible-600 mb-8 mt-4">
+                                <li className="flex gap-3"><Settings size={18} className="text-bible-400"/> {t.nav.search}</li>
+                                <li className="flex gap-3"><Settings size={18} className="text-bible-400"/> {t.common.dailyVerse}</li>
                             </ul>
-                            <button disabled className="w-full py-2 border border-bible-300 rounded-lg text-bible-500">{t.sub.current}</button>
+                            <button disabled className="w-full py-2.5 border border-bible-300 rounded-lg text-bible-500 font-medium bg-bible-50">{t.sub.current}</button>
                         </div>
-                        <div className="bg-white p-6 rounded-2xl border-2 border-yellow-500 shadow-xl relative overflow-hidden">
-                            <div className="absolute top-0 right-0 bg-yellow-500 text-white text-xs px-3 py-1 rounded-bl-lg font-bold">{t.sub.rec}</div>
-                            <h3 className="font-bold text-xl mb-2">{t.sub.pro}</h3>
-                            <p className="text-2xl font-bold mb-4">$5.99<span className="text-sm font-normal text-bible-500">/mo</span></p>
-                            <ul className="space-y-2 text-bible-600 mb-6">
-                                <li className="flex gap-2"><Crown size={16} className="text-yellow-600"/> Unlimited AI Pastor Chat</li>
-                                <li className="flex gap-2"><Crown size={16} className="text-yellow-600"/> Personalized Prayers</li>
-                                <li className="flex gap-2"><Crown size={16} className="text-yellow-600"/> Deep Theological Exegesis</li>
-                                <li className="flex gap-2"><Crown size={16} className="text-yellow-600"/> Sermon Outlines</li>
-                            </ul>
-                            <button className="w-full py-2 bg-bible-800 text-white rounded-lg hover:bg-bible-900 transition-colors">{t.sub.trial}</button>
+
+                        {/* Pro Plan (Coming Soon) */}
+                        <div className="bg-gradient-to-br from-bible-800 to-bible-900 text-white p-6 rounded-2xl shadow-xl relative overflow-hidden flex flex-col">
+                            <div className="absolute top-0 right-0 bg-yellow-500 text-white text-xs px-3 py-1 rounded-bl-lg font-bold shadow-sm">{t.sub.rec}</div>
+                            
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2 text-yellow-400">
+                                    <Clock size={20} />
+                                    <span className="font-bold tracking-wider text-sm">{t.common.comingSoon}</span>
+                                </div>
+                                <h3 className="font-bold text-xl mb-4 text-white">{t.sub.pro}</h3>
+                                
+                                <ul className="space-y-3 text-bible-200 mb-6">
+                                    <li className="flex gap-3"><Crown size={18} className="text-yellow-500"/> {t.sub.feature1}</li>
+                                    <li className="flex gap-3"><Crown size={18} className="text-yellow-500"/> {t.sub.feature2}</li>
+                                    <li className="flex gap-3"><Crown size={18} className="text-yellow-500"/> {t.sub.feature3}</li>
+                                </ul>
+                            </div>
+                            
+                            <button className="w-full py-2.5 bg-yellow-500 text-bible-900 rounded-lg hover:bg-yellow-400 transition-colors font-bold shadow-lg">
+                                {t.sub.trial}
+                            </button>
                         </div>
                     </div>
                 </div>

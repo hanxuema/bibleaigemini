@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UserPreferences, FaithStatus } from '../types';
-import { BIBLE_VERSIONS, DENOMINATIONS, LANGUAGES, FAITH_STATUS_OPTIONS, getText } from '../constants';
+import { BIBLE_VERSIONS, DENOMINATIONS, LANGUAGE_OPTIONS, FAITH_STATUS_OPTIONS, getText } from '../constants';
 import { Book, ChevronRight, Check, Globe, Heart, Church } from 'lucide-react';
 
 interface Props {
@@ -86,17 +86,17 @@ const Onboarding: React.FC<Props> = ({ onComplete }) => {
       <h2 className="text-2xl font-serif font-bold text-bible-900 text-center">{t.welcome}</h2>
       <p className="text-bible-700 text-center mb-6">{t.langStep}</p>
       <div className="grid grid-cols-2 gap-3">
-        {LANGUAGES.map(lang => (
+        {LANGUAGE_OPTIONS.map(opt => (
           <button
-            key={lang}
-            onClick={() => handleLanguageSelect(lang)}
+            key={opt.code}
+            onClick={() => handleLanguageSelect(opt.code)}
             className={`p-4 rounded-xl border text-left transition-all hover:scale-[1.02] ${
-              prefs.language === lang 
+              prefs.language === opt.code 
                 ? 'border-bible-500 bg-bible-100 ring-1 ring-bible-500 shadow-md' 
                 : 'border-bible-200 hover:border-bible-400 hover:bg-white'
             }`}
           >
-            <span className="font-medium text-bible-900">{lang}</span>
+            <span className="font-medium text-bible-900">{opt.label}</span>
           </button>
         ))}
       </div>

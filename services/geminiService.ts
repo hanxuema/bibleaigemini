@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { UserPreferences, AIResponse } from "../types";
+import { getText } from "../constants";
 
 // Helper to initialize AI
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -50,6 +51,26 @@ const responseSchema = {
   required: ["answer", "followUpQuestions", "citedVerses"]
 };
 
+// Helper to parse JSON safely, handling markdown code blocks or plain text fallbacks
+const parseResponse = (responseText: string | undefined): any => {
+    if (!responseText) return {};
+    
+    // Attempt to strip markdown code blocks if present (e.g. ```json ... ```)
+    const cleanText = responseText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+
+    try {
+        return JSON.parse(cleanText);
+    } catch (e) {
+        // If parsing fails, treat the entire response as the answer text
+        console.warn("Failed to parse JSON, falling back to raw text", e);
+        return {
+            answer: responseText,
+            followUpQuestions: [],
+            citedVerses: []
+        };
+    }
+};
+
 export const searchScripture = async (query: string, prefs: UserPreferences): Promise<AIResponse> => {
   const ai = getAI();
   const prompt = `
@@ -72,7 +93,7 @@ export const searchScripture = async (query: string, prefs: UserPreferences): Pr
       }
     });
     
-    const data = JSON.parse(response.text || "{}");
+    const data = parseResponse(response.text);
     return {
       markdown: data.answer || "No results found.",
       followUps: data.followUpQuestions || [],
@@ -80,7 +101,8 @@ export const searchScripture = async (query: string, prefs: UserPreferences): Pr
     };
   } catch (error) {
     console.error("Scripture search error:", error);
-    return { markdown: "Error searching scriptures." };
+    const t = getText(prefs.language).common;
+    return { markdown: t.errorGeneric || "Error searching scriptures." };
   }
 };
 
@@ -108,7 +130,7 @@ export const askPastor = async (question: string, history: string[], prefs: User
       }
     });
     
-    const data = JSON.parse(response.text || "{}");
+    const data = parseResponse(response.text);
     return {
       markdown: data.answer || "I cannot answer right now.",
       followUps: data.followUpQuestions || [],
@@ -116,13 +138,12 @@ export const askPastor = async (question: string, history: string[], prefs: User
     };
   } catch (error) {
     console.error("Pastor chat error:", error);
-    return { markdown: "Service unavailable." };
+    const t = getText(prefs.language).common;
+    return { markdown: t.errorGeneric || "Service unavailable." };
   }
 };
 
 export const generatePrayer = async (topic: string, prefs: UserPreferences): Promise<AIResponse> => {
-  // Prayer can stay simple, or we can use the same structure. 
-  // For consistency, let's use the same structure but maybe fewer follow-ups.
   const ai = getAI();
   const prompt = `
     Write a prayer about: "${topic}".
@@ -142,7 +163,7 @@ export const generatePrayer = async (topic: string, prefs: UserPreferences): Pro
       }
     });
     
-    const data = JSON.parse(response.text || "{}");
+    const data = parseResponse(response.text);
     return {
       markdown: data.answer || "Let us pray...",
       followUps: data.followUpQuestions || [],
@@ -150,6 +171,7 @@ export const generatePrayer = async (topic: string, prefs: UserPreferences): Pro
     };
   } catch (error) {
     console.error("Prayer error:", error);
-    return { markdown: "Error generating prayer." };
+    const t = getText(prefs.language).common;
+    return { markdown: t.errorGeneric || "Error generating prayer." };
   }
 };
