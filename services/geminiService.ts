@@ -1,9 +1,17 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { UserPreferences, AIResponse } from "../types";
 import { getText } from "../constants";
 
 // Helper to initialize AI
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+// Relaxed safety settings for religious content (prevent blocking biblical war/sacrifice themes)
+const SAFETY_SETTINGS = [
+  { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+  { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+  { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+  { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+];
 
 const getSystemInstruction = (prefs: UserPreferences): string => {
   return `
@@ -71,6 +79,20 @@ const parseResponse = (responseText: string | undefined): any => {
     }
 };
 
+// Retry wrapper function
+async function withRetry<T>(operation: () => Promise<T>, retries = 1): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    if (retries > 0) {
+      console.warn(`Operation failed, retrying... (${retries} attempts left)`, error);
+      await new Promise(res => setTimeout(res, 1000)); // wait 1s before retry
+      return withRetry(operation, retries - 1);
+    }
+    throw error;
+  }
+}
+
 export const searchScripture = async (query: string, prefs: UserPreferences): Promise<AIResponse> => {
   const ai = getAI();
   const prompt = `
@@ -82,15 +104,18 @@ export const searchScripture = async (query: string, prefs: UserPreferences): Pr
   `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        systemInstruction: getSystemInstruction(prefs),
-        responseMimeType: "application/json",
-        responseSchema: responseSchema,
-        temperature: 0.3,
-      }
+    const response = await withRetry(async () => {
+      return await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          systemInstruction: getSystemInstruction(prefs),
+          responseMimeType: "application/json",
+          responseSchema: responseSchema,
+          temperature: 0.3,
+          safetySettings: SAFETY_SETTINGS,
+        }
+      });
     });
     
     const data = parseResponse(response.text);
@@ -102,7 +127,7 @@ export const searchScripture = async (query: string, prefs: UserPreferences): Pr
   } catch (error) {
     console.error("Scripture search error:", error);
     const t = getText(prefs.language).common;
-    return { markdown: t.errorGeneric || "Error searching scriptures." };
+    return { markdown: t.errorGeneric || "An error occurred. Please try again." };
   }
 };
 
@@ -119,15 +144,18 @@ export const askPastor = async (question: string, history: string[], prefs: User
   `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt, // history would be included here in a real app
-      config: {
-        systemInstruction: getSystemInstruction(prefs),
-        responseMimeType: "application/json",
-        responseSchema: responseSchema,
-        thinkingConfig: { thinkingBudget: 1024 },
-      }
+    const response = await withRetry(async () => {
+      return await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          systemInstruction: getSystemInstruction(prefs),
+          responseMimeType: "application/json",
+          responseSchema: responseSchema,
+          thinkingConfig: { thinkingBudget: 1024 },
+          safetySettings: SAFETY_SETTINGS,
+        }
+      });
     });
     
     const data = parseResponse(response.text);
@@ -153,14 +181,17 @@ export const generatePrayer = async (topic: string, prefs: UserPreferences): Pro
   `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        systemInstruction: getSystemInstruction(prefs),
-        responseMimeType: "application/json",
-        responseSchema: responseSchema,
-      }
+    const response = await withRetry(async () => {
+      return await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          systemInstruction: getSystemInstruction(prefs),
+          responseMimeType: "application/json",
+          responseSchema: responseSchema,
+          safetySettings: SAFETY_SETTINGS,
+        }
+      });
     });
     
     const data = parseResponse(response.text);
