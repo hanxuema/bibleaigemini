@@ -7,7 +7,8 @@ import DailyVerseTicker from './components/DailyVerseTicker';
 import BibleQuiz from './components/BibleQuiz';
 import { askPastor, generatePrayer } from './services/geminiService';
 import { checkRateLimit, incrementUsage } from './services/rateLimit';
-import { Book, MessageCircle, Heart, Settings, Menu, X, Crown, Search as SearchIcon, Clock, BrainCircuit } from 'lucide-react';
+import { LogoIcon } from './components/Logo';
+import { MessageCircle, Heart, Settings, Menu, X, Crown, Search as SearchIcon, Clock, BrainCircuit } from 'lucide-react';
 import { getText } from './constants';
 
 const App: React.FC = () => {
@@ -149,8 +150,8 @@ const App: React.FC = () => {
       {/* Sidebar Navigation */}
       <aside className={`fixed md:relative z-30 w-64 h-full bg-white border-r border-bible-200 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} flex flex-col`}>
         <div className="p-6 border-b border-bible-100 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-bible-800">
-             <Book className="text-bible-600" />
+          <div className="flex items-center gap-3 text-bible-800">
+             <LogoIcon className="w-8 h-8" />
              <span className="font-serif font-bold text-xl tracking-tight">BibleAI</span>
           </div>
           <button className="md:hidden" onClick={() => setIsSidebarOpen(false)}>
@@ -190,12 +191,18 @@ const App: React.FC = () => {
             <button onClick={() => setIsSidebarOpen(true)} className="text-bible-700">
                 <Menu />
             </button>
-            <span className="font-serif font-bold text-lg text-bible-800">BibleAI</span>
+            <div className="flex items-center gap-2">
+                <LogoIcon className="w-6 h-6" />
+                <span className="font-serif font-bold text-lg text-bible-800">BibleAI</span>
+            </div>
             <div className="w-6" /> {/* Spacer */}
         </header>
 
         {/* Daily Verse Ticker */}
-        <DailyVerseTicker language={prefs.language} />
+        <DailyVerseTicker 
+            language={prefs.language} 
+            onQuizClick={() => setCurrentView(AppView.QUIZ)}
+        />
 
         <div className="flex-1 overflow-y-auto p-4 md:p-8 max-w-[1400px] mx-auto w-full h-full relative">
             {currentView === AppView.SEARCH && (

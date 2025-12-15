@@ -74,6 +74,7 @@ export const UI_TRANSLATIONS: Record<string, any> = {
     common: {
         rateLimit: "You have reached your daily limit of 30 messages. Please seek God's peace and return tomorrow.",
         dailyVerse: "Daily Verse",
+        quizBtn: "Take Quiz",
         comingSoon: "Coming Soon",
         advancedQaTitle: "Advanced Q&A Coming Soon",
         advancedQaDesc: "We are developing a specialized theological model for deeper scriptural analysis.",
@@ -100,7 +101,7 @@ export const UI_TRANSLATIONS: Record<string, any> = {
       search: "Scripture Search",
       pastor: "Advanced Q&A",
       prayer: "Prayer Room",
-      quiz: "Daily Bible Quiz",
+      quiz: "Bible Quiz",
       sub: "Premium Plan",
       settings: "Settings",
       account: "Account"
@@ -124,7 +125,7 @@ export const UI_TRANSLATIONS: Record<string, any> = {
       viewReferences: "View Related Verses"
     },
     quiz: {
-      title: "Daily Bible Quiz",
+      title: "Bible Quiz",
       startBtn: "Start Daily Challenge",
       loading: "Preparing your quiz...",
       question: "Question",
@@ -165,6 +166,7 @@ export const UI_TRANSLATIONS: Record<string, any> = {
     common: {
         rateLimit: "您已达到每日 30 条消息的限制。请安息主怀，明天再来。",
         dailyVerse: "每日金句",
+        quizBtn: "挑战测试",
         comingSoon: "即将推出",
         advancedQaTitle: "高级问答 即将推出",
         advancedQaDesc: "我们正在开发用于深度经文分析的专业神学模型。",
@@ -191,7 +193,7 @@ export const UI_TRANSLATIONS: Record<string, any> = {
       search: "经文查询",
       pastor: "高级问答",
       prayer: "祷告室",
-      quiz: "每日圣经测验",
+      quiz: "圣经测试",
       sub: "高级会员",
       settings: "设置",
       account: "账户"
@@ -215,7 +217,7 @@ export const UI_TRANSLATIONS: Record<string, any> = {
       viewReferences: "查看相关章节"
     },
     quiz: {
-      title: "每日圣经测验",
+      title: "圣经测试",
       startBtn: "开始今日挑战",
       loading: "正在准备考题...",
       question: "问题",

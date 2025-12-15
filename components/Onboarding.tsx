@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { UserPreferences, FaithStatus } from '../types';
 import { BIBLE_VERSIONS, DENOMINATIONS, LANGUAGE_OPTIONS, FAITH_STATUS_OPTIONS, getText } from '../constants';
-import { Book, ChevronRight, Check, Globe, Heart, Church } from 'lucide-react';
+import { ChevronRight, Check, Globe, Heart, Church } from 'lucide-react';
+import { LogoIcon } from './Logo';
 
 interface Props {
   onComplete: (prefs: UserPreferences) => void;
@@ -82,10 +83,13 @@ const Onboarding: React.FC<Props> = ({ onComplete }) => {
   );
 
   const renderStep1_Language = () => (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-4 animate-fade-in flex flex-col items-center">
+      <div className="mb-2 transform scale-125">
+         <LogoIcon className="w-12 h-12 shadow-md" />
+      </div>
       <h2 className="text-2xl font-serif font-bold text-bible-900 text-center">{t.welcome}</h2>
       <p className="text-bible-700 text-center mb-6">{t.langStep}</p>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 w-full">
         {LANGUAGE_OPTIONS.map(opt => (
           <button
             key={opt.code}
