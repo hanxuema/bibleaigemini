@@ -43,8 +43,7 @@ const DailyVerseTicker: React.FC<Props> = ({ language, onQuizClick }) => {
                 className="absolute right-0 top-0 bottom-0 z-30 bg-yellow-500 hover:bg-yellow-400 text-bible-900 px-4 flex items-center gap-2 font-bold text-xs transition-colors shadow-lg"
             >
                 <BrainCircuit size={14} />
-                <span className="hidden sm:inline">{t.quizBtn}</span>
-                <span className="sm:hidden">Quiz</span>
+                <span>{t.quizBtn}</span>
             </button>
 
             <style>{`
