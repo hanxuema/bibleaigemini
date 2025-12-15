@@ -3,6 +3,7 @@ export enum AppView {
   SEARCH = 'SEARCH',
   PASTOR = 'PASTOR',
   PRAYER = 'PRAYER',
+  QUIZ = 'QUIZ',
   SETTINGS = 'SETTINGS',
   SUBSCRIPTION = 'SUBSCRIPTION'
 }
@@ -46,9 +47,21 @@ export interface SearchResult {
   context?: string;
 }
 
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correctIndex: number; // 0-3
+  explanation: string;
+  reference: string;
+}
+
 // Service response type
 export interface AIResponse {
   markdown: string;
   followUps?: string[];
   references?: BibleReference[];
+}
+
+export interface QuizResponse {
+  questions: QuizQuestion[];
 }

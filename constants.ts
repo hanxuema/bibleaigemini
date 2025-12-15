@@ -100,6 +100,7 @@ export const UI_TRANSLATIONS: Record<string, any> = {
       search: "Scripture Search",
       pastor: "Advanced Q&A",
       prayer: "Prayer Room",
+      quiz: "Daily Bible Quiz",
       sub: "Premium Plan",
       settings: "Settings",
       account: "Account"
@@ -121,6 +122,20 @@ export const UI_TRANSLATIONS: Record<string, any> = {
       emptyPrayer: "What should we pray for today?",
       you: "You",
       viewReferences: "View Related Verses"
+    },
+    quiz: {
+      title: "Daily Bible Quiz",
+      startBtn: "Start Daily Challenge",
+      loading: "Preparing your quiz...",
+      question: "Question",
+      next: "Next Question",
+      finish: "See Results",
+      scoreTitle: "Quiz Complete!",
+      scoreDesc: "You scored",
+      alreadyPlayed: "You've already played today!",
+      comeBack: "Come back tomorrow for new questions.",
+      correct: "Correct!",
+      wrong: "Incorrect"
     },
     sub: {
       title: "Unlock Full Spiritual Depth",
@@ -176,6 +191,7 @@ export const UI_TRANSLATIONS: Record<string, any> = {
       search: "经文查询",
       pastor: "高级问答",
       prayer: "祷告室",
+      quiz: "每日圣经测验",
       sub: "高级会员",
       settings: "设置",
       account: "账户"
@@ -197,6 +213,20 @@ export const UI_TRANSLATIONS: Record<string, any> = {
       emptyPrayer: "今天我们为什么祷告？",
       you: "你",
       viewReferences: "查看相关章节"
+    },
+    quiz: {
+      title: "每日圣经测验",
+      startBtn: "开始今日挑战",
+      loading: "正在准备考题...",
+      question: "问题",
+      next: "下一题",
+      finish: "查看结果",
+      scoreTitle: "测验完成！",
+      scoreDesc: "您的得分",
+      alreadyPlayed: "您今天已经完成测验了！",
+      comeBack: "请明天再来挑战新的题目。",
+      correct: "回答正确！",
+      wrong: "回答错误"
     },
     sub: {
       title: "解锁属灵深度",

@@ -4,9 +4,10 @@ import Onboarding from './components/Onboarding';
 import ChatInterface from './components/ChatInterface';
 import ScriptureSearch from './components/ScriptureSearch';
 import DailyVerseTicker from './components/DailyVerseTicker';
+import BibleQuiz from './components/BibleQuiz';
 import { askPastor, generatePrayer } from './services/geminiService';
 import { checkRateLimit, incrementUsage } from './services/rateLimit';
-import { Book, MessageCircle, Heart, Settings, Menu, X, Crown, Search as SearchIcon, Clock } from 'lucide-react';
+import { Book, MessageCircle, Heart, Settings, Menu, X, Crown, Search as SearchIcon, Clock, BrainCircuit } from 'lucide-react';
 import { getText } from './constants';
 
 const App: React.FC = () => {
@@ -25,6 +26,7 @@ const App: React.FC = () => {
     if (hash === '#search') setCurrentView(AppView.SEARCH);
     else if (hash === '#pastor') setCurrentView(AppView.PASTOR);
     else if (hash === '#prayer') setCurrentView(AppView.PRAYER);
+    else if (hash === '#quiz') setCurrentView(AppView.QUIZ);
   }, []);
 
   const handleOnboardingComplete = (newPrefs: UserPreferences) => {
@@ -159,6 +161,7 @@ const App: React.FC = () => {
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           <div className="text-xs font-semibold text-bible-400 uppercase tracking-wider mb-2 px-3">{t.nav.menu}</div>
           <NavItem view={AppView.SEARCH} icon={SearchIcon} label={t.nav.search} />
+          <NavItem view={AppView.QUIZ} icon={BrainCircuit} label={t.nav.quiz} />
           <NavItem view={AppView.PASTOR} icon={MessageCircle} label={t.nav.pastor} lock={true} />
           <NavItem view={AppView.PRAYER} icon={Heart} label={t.nav.prayer} lock={true} />
           
@@ -197,6 +200,10 @@ const App: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-4 md:p-8 max-w-[1400px] mx-auto w-full h-full relative">
             {currentView === AppView.SEARCH && (
                 <ScriptureSearch prefs={prefs} />
+            )}
+
+            {currentView === AppView.QUIZ && (
+                <BibleQuiz prefs={prefs} />
             )}
 
             {currentView === AppView.PASTOR && (
