@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, User, Sparkles, Loader2, BookOpen, ChevronRight, X } from 'lucide-react';
+import { Send, User, Sparkles, Loader2, BookOpen, ChevronRight, X, Maximize2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { ChatMessage, UserPreferences, BibleReference } from '../types';
 import { getText } from '../constants';
+import { getChapterContentStream } from '../services/geminiService';
 
 interface Props {
   messages: ChatMessage[];
@@ -18,6 +19,11 @@ const ChatInterface: React.FC<Props> = ({ messages, onSendMessage, isLoading, pl
   const [input, setInput] = useState('');
   const [activeRefs, setActiveRefs] = useState<BibleReference[]>([]);
   const [showRefPanel, setShowRefPanel] = useState(false);
+  
+  // Chapter Reader State
+  const [readingChapter, setReadingChapter] = useState<{title: string, content: string} | null>(null);
+  const [isLoadingChapter, setIsLoadingChapter] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const t = getText(prefs.language).chat;
 
@@ -54,6 +60,39 @@ const ChatInterface: React.FC<Props> = ({ messages, onSendMessage, isLoading, pl
   const handleShowReferences = (refs: BibleReference[]) => {
       setActiveRefs(refs);
       setShowRefPanel(true);
+  };
+
+  const handleReadChapter = async (ref: BibleReference) => {
+    const chapterRef = ref.chapter || ref.ref.split(':')[0]; // e.g., "John 3"
+    
+    setReadingChapter({ title: chapterRef, content: '' }); // Open modal immediately
+    setIsLoadingChapter(true);
+
+    try {
+        const stream = getChapterContentStream(chapterRef, prefs);
+        
+        let fullContent = '';
+        let hasStarted = false;
+
+        for await (const chunk of stream) {
+            if (!hasStarted) {
+                setIsLoadingChapter(false);
+                hasStarted = true;
+            }
+            fullContent += chunk;
+            setReadingChapter(prev => ({ 
+                title: prev?.title || chapterRef, 
+                content: fullContent 
+            }));
+        }
+    } catch (e) {
+        console.error(e);
+        setIsLoadingChapter(false);
+        setReadingChapter(prev => ({ 
+            title: prev?.title || chapterRef, 
+            content: prev?.content || "Error loading chapter text."
+        }));
+    }
   };
 
   return (
@@ -114,7 +153,13 @@ const ChatInterface: React.FC<Props> = ({ messages, onSendMessage, isLoading, pl
                         )}
                     </div>
                     <div className={`prose prose-sm max-w-none ${msg.role === 'user' ? 'prose-invert' : 'prose-stone'}`}>
-                        <ReactMarkdown>{msg.text}</ReactMarkdown>
+                        <ReactMarkdown 
+                            components={{
+                                a: ({node, ...props}) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-bible-600 underline hover:text-bible-800" />
+                            }}
+                        >
+                            {msg.text}
+                        </ReactMarkdown>
                     </div>
 
                     {/* View References Button (Inside bubble, but distinct) */}
@@ -213,13 +258,51 @@ const ChatInterface: React.FC<Props> = ({ messages, onSendMessage, isLoading, pl
                                 "{ref.text}"
                             </p>
                             <div className="mt-2 flex justify-end">
-                                <button className="text-[10px] text-bible-500 font-medium hover:text-bible-700 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    Read Full Chapter <ChevronRight size={10} />
+                                <button 
+                                    onClick={() => handleReadChapter(ref)}
+                                    className="text-[10px] text-bible-500 font-medium hover:text-bible-700 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    Read Full Chapter <Maximize2 size={10} />
                                 </button>
                             </div>
                         </div>
                     ))
                 )}
+            </div>
+        </div>
+      )}
+
+      {/* Full Chapter Modal / Popup */}
+      {readingChapter && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white w-full max-w-2xl max-h-[85vh] rounded-2xl shadow-2xl flex flex-col relative animate-scale-in">
+                {/* Modal Header */}
+                <div className="p-5 border-b border-bible-100 flex items-center justify-between bg-bible-50 rounded-t-2xl">
+                    <div>
+                        <h3 className="text-2xl font-serif font-bold text-bible-900">{readingChapter.title}</h3>
+                        <span className="text-xs font-semibold text-bible-500 uppercase tracking-widest">{prefs.bibleVersion}</span>
+                    </div>
+                    <button 
+                        onClick={() => setReadingChapter(null)}
+                        className="p-2 hover:bg-bible-200 rounded-full text-bible-500 transition-colors"
+                    >
+                        <X size={24} />
+                    </button>
+                </div>
+
+                {/* Modal Content */}
+                <div className="flex-1 overflow-y-auto p-6 md:p-8 bg-white rounded-b-2xl">
+                    {isLoadingChapter && !readingChapter.content ? (
+                        <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                            <Loader2 className="animate-spin text-bible-500" size={32} />
+                            <p className="text-bible-400 font-medium animate-pulse">Retrieving sacred text...</p>
+                        </div>
+                    ) : (
+                        <div className="prose prose-lg prose-stone max-w-none font-serif leading-loose text-bible-900">
+                             <ReactMarkdown>{readingChapter.content}</ReactMarkdown>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
       )}

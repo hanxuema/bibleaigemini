@@ -99,7 +99,7 @@ const responseSchema = {
   properties: {
     answer: { 
       type: Type.STRING,
-      description: "The main response in Markdown format. Do NOT include the list of references at the end of the text, as they will be shown in a side panel."
+      description: "The main response in Markdown format. For the Pastor/Deep Study mode, this MUST include sections for 'Original Text Analysis' and 'Recommended Reading'."
     },
     followUpQuestions: {
       type: Type.ARRAY,
@@ -232,13 +232,25 @@ export const searchScripture = async (query: string, prefs: UserPreferences): Pr
 
 export const askPastor = async (question: string, history: string[], prefs: UserPreferences): Promise<AIResponse> => {
   const ai = getAI();
+  // Enhanced prompt for Deep Exegesis
   const prompt = `
     User question: "${question}"
     
-    Provide a pastoral response.
-    - Answer logically and empathetically in 'answer'.
+    Act as a scholarly Bible teacher and theologian.
+    Provide a deep, exegetical response in the 'answer' field using Markdown.
+    
+    STRUCTURE YOUR RESPONSE AS FOLLOWS:
+    1. **Direct Answer**: Clear, pastoral response.
+    2. **Original Text Analysis**: Identify key Hebrew/Greek words. Provide transliteration, original meaning, and nuance.
+    3. **Theological Context**: Connect to systematic theology, history, or cross-references.
+    4. **Recommended Reading**: 
+       - List 3-4 theological papers, commentaries, or books.
+       - IMPORTANT: Do not generate fake direct URLs (no .pdf links). 
+       - INSTEAD, format them as Markdown links that perform a Google Scholar or Google Search for the title/topic. 
+       - Example Format: [Systematic Theology by Grudem](https://scholar.google.com/scholar?q=Systematic+Theology+Grudem) or [Article on Hypostatic Union](https://www.google.com/search?q=theology+paper+hypostatic+union).
+    
     - If you quote scripture, put the reference and text in 'citedVerses'.
-    - Suggest 3 follow-up questions in 'followUpQuestions'.
+    - Suggest 3 deeper, analytical follow-up questions in 'followUpQuestions'.
     - Ensure all text is in ${prefs.language}.
   `;
 
@@ -251,7 +263,7 @@ export const askPastor = async (question: string, history: string[], prefs: User
           systemInstruction: getSystemInstruction(prefs),
           responseMimeType: "application/json",
           responseSchema: responseSchema,
-          thinkingConfig: { thinkingBudget: 1024 },
+          thinkingConfig: { thinkingBudget: 2048 }, // Increased thinking budget for deeper analysis
           safetySettings: SAFETY_SETTINGS,
         }
       });
@@ -381,4 +393,40 @@ export const generateDailyQuiz = async (prefs: UserPreferences): Promise<QuizRes
       console.error("Quiz error:", error);
       return { questions: [] };
     }
-  };
+};
+
+// Streaming function for fetching full chapter content
+export const getChapterContentStream = async function* (reference: string, prefs: UserPreferences) {
+    const ai = getAI();
+    const prompt = `
+      Provide the full biblical text for: "${reference}".
+      Version: ${prefs.bibleVersion}.
+      Language: ${prefs.language}.
+      
+      Output ONLY the full text of the chapter formatted in clean Markdown.
+      Use bolding for verse numbers (e.g. **1** In the beginning...).
+      Do not add introductions or conclusions, just the scripture text.
+    `;
+  
+    try {
+      const response = await ai.models.generateContentStream({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          systemInstruction: getSystemInstruction(prefs),
+          temperature: 0.3,
+          safetySettings: SAFETY_SETTINGS,
+        }
+      });
+  
+      for await (const chunk of response) {
+        const text = chunk.text;
+        if (text) {
+            yield text;
+        }
+      }
+    } catch (error) {
+      console.error("Get Chapter Stream error:", error);
+      yield "An error occurred while retrieving the chapter text.";
+    }
+};

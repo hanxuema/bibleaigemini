@@ -8,7 +8,7 @@ import BibleQuiz from './components/BibleQuiz';
 import { askPastor, generatePrayer } from './services/geminiService';
 import { checkRateLimit, incrementUsage } from './services/rateLimit';
 import { LogoIcon } from './components/Logo';
-import { MessageCircle, Heart, Settings, Menu, X, Crown, Search as SearchIcon, Clock, BrainCircuit } from 'lucide-react';
+import { MessageCircle, Heart, Settings, Menu, X, Crown, Search as SearchIcon, Clock, BrainCircuit, BookOpenText } from 'lucide-react';
 import { getText } from './constants';
 
 const App: React.FC = () => {
@@ -163,7 +163,7 @@ const App: React.FC = () => {
           <div className="text-xs font-semibold text-bible-400 uppercase tracking-wider mb-2 px-3">{t.nav.menu}</div>
           <NavItem view={AppView.SEARCH} icon={SearchIcon} label={t.nav.search} />
           <NavItem view={AppView.QUIZ} icon={BrainCircuit} label={t.nav.quiz} />
-          <NavItem view={AppView.PASTOR} icon={MessageCircle} label={t.nav.pastor} lock={true} />
+          <NavItem view={AppView.PASTOR} icon={BookOpenText} label={t.nav.pastor} lock={false} />
           <NavItem view={AppView.PRAYER} icon={Heart} label={t.nav.prayer} lock={true} />
           
           <div className="mt-8 text-xs font-semibold text-bible-400 uppercase tracking-wider mb-2 px-3">{t.nav.account}</div>
@@ -214,23 +214,16 @@ const App: React.FC = () => {
             )}
 
             {currentView === AppView.PASTOR && (
-                <div className="flex flex-col items-center justify-center h-[70vh] text-center p-8 space-y-6 animate-fade-in">
-                    <div className="w-20 h-20 bg-bible-200 rounded-full flex items-center justify-center text-bible-600 mb-4">
-                        <MessageCircle size={40} />
-                    </div>
-                    <div>
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold mb-3">
-                            <Clock size={12} /> {t.common.comingSoon}
-                        </div>
-                        <h2 className="text-3xl font-serif font-bold text-bible-900 mb-2">{t.common.advancedQaTitle}</h2>
-                        <p className="text-bible-600 max-w-md mx-auto">{t.common.advancedQaDesc}</p>
-                    </div>
-                    <button 
-                        onClick={() => setCurrentView(AppView.SUBSCRIPTION)}
-                        className="px-6 py-3 bg-bible-800 text-white rounded-xl hover:bg-bible-900 transition-colors font-semibold shadow-lg"
-                    >
-                        {t.sub.trial}
-                    </button>
+                <div className="h-[calc(100vh-10rem)] md:h-[calc(100vh-8rem)]">
+                    <ChatInterface 
+                        messages={pastorMessages} 
+                        onSendMessage={handlePastorMessage} 
+                        isLoading={isLoading}
+                        placeholder={t.chat.pastorPlaceholder || t.chat.placeholder}
+                        personaName={t.nav.pastor}
+                        emptyStateText={t.chat.emptyPastor}
+                        prefs={prefs}
+                    />
                 </div>
             )}
 

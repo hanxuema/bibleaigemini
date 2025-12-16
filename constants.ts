@@ -76,8 +76,8 @@ export const UI_TRANSLATIONS: Record<string, any> = {
         dailyVerse: "Daily Verse",
         quizBtn: "Take Quiz",
         comingSoon: "Coming Soon",
-        advancedQaTitle: "Advanced Q&A Coming Soon",
-        advancedQaDesc: "We are developing a specialized theological model for deeper scriptural analysis.",
+        advancedQaTitle: "Deep Study",
+        advancedQaDesc: "Analyze original texts (Hebrew/Greek), historical context, and theological themes.",
         errorGeneric: "An error occurred while connecting to the service. Please try again.",
     },
     onboarding: {
@@ -99,7 +99,7 @@ export const UI_TRANSLATIONS: Record<string, any> = {
     nav: {
       menu: "Menu",
       search: "Scripture Search",
-      pastor: "Advanced Q&A",
+      pastor: "Deep Study",
       prayer: "Prayer Room",
       quiz: "Bible Quiz",
       sub: "Premium Plan",
@@ -117,9 +117,10 @@ export const UI_TRANSLATIONS: Record<string, any> = {
     },
     chat: {
       placeholder: "Type a message...",
+      pastorPlaceholder: "Ask about original text, history, or theology...",
       aiFooter: "AI answers are generated based on your selected Bible version. Always verify with original texts.",
       consulting: "Consulting scripture...",
-      emptyPastor: "Ask a theological question or seek advice to begin.",
+      emptyPastor: "Enter a topic to receive original text analysis (Hebrew/Greek), historical context, and theological reading recommendations.",
       emptyPrayer: "What should we pray for today?",
       you: "You",
       viewReferences: "View Related Verses"
@@ -168,8 +169,8 @@ export const UI_TRANSLATIONS: Record<string, any> = {
         dailyVerse: "每日金句",
         quizBtn: "挑战测试",
         comingSoon: "即将推出",
-        advancedQaTitle: "高级问答 即将推出",
-        advancedQaDesc: "我们正在开发用于深度经文分析的专业神学模型。",
+        advancedQaTitle: "深度研经",
+        advancedQaDesc: "分析圣经原文（希伯来文/希腊文）、历史背景及神学主题。",
         errorGeneric: "连接服务时发生错误。请稍后重试。",
     },
     onboarding: {
@@ -191,7 +192,7 @@ export const UI_TRANSLATIONS: Record<string, any> = {
     nav: {
       menu: "菜单",
       search: "经文查询",
-      pastor: "高级问答",
+      pastor: "深度研经",
       prayer: "祷告室",
       quiz: "圣经测试",
       sub: "高级会员",
@@ -209,9 +210,10 @@ export const UI_TRANSLATIONS: Record<string, any> = {
     },
     chat: {
       placeholder: "输入消息...",
+      pastorPlaceholder: "询问原文解析、历史背景或神学问题...",
       aiFooter: "AI 回答基于您选择的圣经版本生成。请务必查证原文。",
       consulting: "正在查考圣经...",
-      emptyPastor: "请提出神学问题或寻求建议以开始。",
+      emptyPastor: "请输入主题以获取原文解析（希伯来文/希腊文）、历史背景及相关神学阅读推荐。",
       emptyPrayer: "今天我们为什么祷告？",
       you: "你",
       viewReferences: "查看相关章节"
